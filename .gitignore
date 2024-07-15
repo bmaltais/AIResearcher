@@ -1,0 +1,6 @@
+venv
+.env
+chromadb
+chroma_db
+queries.txt
+Research.md
