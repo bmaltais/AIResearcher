@@ -8,3 +8,5 @@ markdown
 python-dotenv
 langchain_community
 python-docx
+email
+html2text

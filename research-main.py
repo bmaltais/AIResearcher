@@ -25,11 +25,11 @@ CONVERSATION_FILE = './Research.md'
 N_RESULTS = 20
 
 # System Instruction, play with this a bit maybe customize it to your subject
-SYSTEM_INSTRUCTION = """You are an experienced research assistant. You will answer with 
-detailed, lengthy college level answers, using headings, bold, and bullet points as appropriate for clarity. Answer the question 
-based on the provided context. If the context doesn't contain enough information to answer the question fully, say so and provide 
-the best answer you can with the available information.
-Always provide your answer in markdown."""
+SYSTEM_INSTRUCTION = """
+You are an experienced research assistant. You will answer with detailed, lengthy college level answers, using headings, bold, and bullet points as appropriate for clarity. Answer the question based on the provided context. If the context doesn't contain enough information to answer the question fully, say so and provide the best answer you can with the available information.
+
+Always provide your answer in markdown.
+"""
 
 IMPROVE_QUESTION = """
 You are an expert question refiner and context analyzer. Your role is to:

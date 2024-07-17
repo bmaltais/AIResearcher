@@ -6,18 +6,21 @@ import argparse
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
 from dotenv import load_dotenv
-import google.generativeai as genai
 from datetime import datetime
 
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.vectorstores import Chroma
+from langchain_community.llms import Ollama
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
 
 load_dotenv()
 
 QUERY_FILE = 'queries.txt'
 CONVERSATION_FILE = './Research.md'
+MODEL = "gemma2"
 
-N_RESULTS = 20
+N_RESULTS = 5
 
 SYSTEM_INSTRUCTION = """
 You are an experienced research assistant. You will answer with detailed, lengthy university level answers.
@@ -27,7 +30,7 @@ Answer the question based on the provided context. If the context doesn't contai
 Always provide your answer in markdown.
 """
 
-IMPROVE_QUESTION = """
+IMPROVE_INSTRUCTION = """
 You are an expert question refiner and context analyzer. Your role is to:
 
 1. Take a user's original question
@@ -49,7 +52,7 @@ DO NOT provide any information about what lead to the improved question. Just pr
 N_HISTORY_LINES = 10
 
 def setup_argparse():
-    parser = argparse.ArgumentParser(description="ChromaDB and Gemini Query Script")
+    parser = argparse.ArgumentParser(description="ChromaDB and Ollama Query Script")
     parser.add_argument("--collection", type=str, default="default_collection", help="Name of the ChromaDB collection")
     parser.add_argument("--chroma-db-path", type=str, default="./chroma_db", help="Path to store ChromaDB")
     return parser.parse_args()
@@ -70,15 +73,17 @@ def query_chromadb(db, query_text, num_results=20):
         })
     return processed_results
 
-def setup_gemini(model_name, system_instruction, api_key):
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel(model_name=model_name, safety_settings=None, system_instruction=system_instruction)    
-    return model
+def setup_ollama(model_name):
+    llm = Ollama(model=model_name)
+    prompt = PromptTemplate(
+        input_variables=["system_instruction", "context", "question"],
+        template="System instructions: {system_instruction}\n\nContext: {context}\n\nQuestion: {question}"
+    )
+    return LLMChain(llm=llm, prompt=prompt)
 
-def query_gemini(model, context, question):
-    prompt = f"""Context: \n{context}\n\nQuestion: \n{question}"""
-    response = model.generate_content(prompt)
-    return response.text
+def query_ollama(chain, context, question, system_instruction):
+    response = chain.run(system_instruction=system_instruction, context=context, question=question)
+    return response
 
 def log_full_query(query, context, metadata, query_file):
     with open(query_file, 'a', encoding='utf-8') as f:
@@ -108,8 +113,7 @@ def main():
     args = setup_argparse()
     
     db = setup_embeddings_and_db(args.chroma_db_path, args.collection)
-    gemini_model = setup_gemini('gemini-1.5-pro', SYSTEM_INSTRUCTION, os.getenv('GOOGLE_API_KEY'))
-    improve_question_model = setup_gemini('gemini-1.5-pro', IMPROVE_QUESTION, os.getenv('GOOGLE_API_KEY'))
+    ollama_chain = setup_ollama(MODEL)
     
     improve_enabled = False
     history = ''
@@ -145,8 +149,8 @@ def main():
         log_full_query(query, context, metadata, QUERY_FILE)
         
         if improve_enabled:
-            print("Improving question with Gemini...")
-            improved_question = query_gemini(improve_question_model, context, query)
+            print(f"Improving question with Ollama {MODEL}...")
+            improved_question = query_ollama(ollama_chain, context, query, IMPROVE_INSTRUCTION)
             
             print(f"\nImproved question: {improved_question}")
             log_conversation(query, improved_question, metadata, distances, CONVERSATION_FILE)
@@ -157,14 +161,14 @@ def main():
             metadata = [result['metadatas'] for result in results]
             distances = [result['distances'] for result in results]
 
-        print("Querying Gemini...")
-        answer = query_gemini(gemini_model, context, query)
+        print(f"Querying Ollama {MODEL}...")
+        answer = query_ollama(ollama_chain, context, query, SYSTEM_INSTRUCTION)
         
         log_conversation(query, answer, metadata, distances, CONVERSATION_FILE)
 
         history += '\n' + query + '\n' + answer
         
-        print("\nGemini's answer:")
+        print(f"\nOllama {MODEL}'s answer:")
         print(answer)
         print("\nMetadata of sources:")
         for i, (meta, dist) in enumerate(zip(metadata, distances), 1):
