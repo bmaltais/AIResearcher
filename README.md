@@ -1,29 +1,47 @@
 # AIResearcher
-This is a very simple RAG/AI system I put together. All the ones I was seeing were overly complicated. It uses Chromadb and Gemini 1.5, both of which are free at low usage levels. the intent here is to be dead simple but sophisticated enough you can import hundreds of books on a subject and get good answers from AI. In future I may try other AI tools. It would not be hard to change it out for Ollama, Claude, GPT-4o or whatever.
 
-# Installation
-1. create a new virtual environment
-   > conda create -n "researcher" python=3.11
+This is a simple RAG/AI system designed for ease of use. It utilizes Chromadb and Gemini 1.5, both of which offer free usage at low levels. The system is intended to be straightforward yet sophisticated enough to import hundreds of books on a subject and generate quality AI-driven answers. Future iterations may explore other AI tools, and it would be relatively simple to adapt it for use with Ollama, Claude, GPT-4, or other AI models.
+
+## Installation (Windows)
+
+1. Clone the repository
+2. Navigate to the cloned repository directory:
    
-   > conda activate researcher
-2. Get an API key from Google
-    > https://aistudio.google.com/app/apikey
-3. Install Chromadb
-    > pip install chromadb
-4. Install dependancies
-    > pip install -r requirements.txt
-5. Collect source material
+   `cd <cloned-repo-name>`
+   
+3. Create a new virtual environment:
+   
+   ```pwsh
+   python -m venv venv
+   ./venv/Scripts/activate
+   ```
+   
+4. Install required packages:
+   
+   `pip install -r requirements.txt`
+   
+5. Obtain an API key from Google:
+   [https://aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)
 
-    The script will import PDF, epub, txt, markdown. This is all text based so it won't work with photos, graphs, etc. You should organize the books to a single subject for best results. You should also limit it to quality sources you want providing answers. If you have two wildly divergent viewpoints you may do better to make two collections so you know which viewpoint you are getting. 
-6. Import source material to Chroma
+## Usage (Windows)
 
-    Edit the script to reflect the location of your source material, your collection name and your database location. For large books it may take a while to import but it should handle dozens or even hundreds of books on ordinary hardware. Embedding as all handled by Chroma making it very easy.
-   > python3 importall.py
-7. Set up config script
+1. Collect source material
+   - The script supports importing PDF, EPUB, TXT, and Markdown files.
+   - Note: This is a text-based system and won't work with photos, graphs, etc.
+   - Organize books by a single subject for optimal results.
+   - Limit sources to quality materials you want to provide answers.
+   - For divergent viewpoints, consider creating separate collections.
 
-     Edit the config script to match your setup. I recommend using multiple collections for multiple subjects. Just make new config scripts for each collection/subject. I like to direct the output to a markdown file in Obsidian but any text reader will work, though a markdown reader will be nicer.  
-8. Research
-   > python3 research-main.py config_subject.py
+2. Import source material to Chroma:
+   
+   `python .\importall_embeds.py --collection books --document-directory "H:\open-webui\data\docs\books\"`
+   
 
-   You will type your questions into the terminal and you can either read the response there or much nicer is to just follow the output in Obsidian. I use the plugin Admonition to make some nicer callout formatting. I have it set currently to output sources into the markdown.
-
+3. Query the system:
+   
+   `python .\research-main_embeds.py --collection books`
+   
+   - Type your questions into the terminal.
+   - Read responses in the terminal or in Obsidian for a better experience.
+   - The Admonition plugin for Obsidian can enhance formatting of the output.
+   - Sources are currently set to output into the markdown.

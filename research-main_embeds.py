@@ -29,21 +29,21 @@ Always provide your answer in markdown.
 
 IMPROVE_QUESTION = """
 You are an expert question refiner and context analyzer. Your role is to:
-
 1. Take a user's original question
 2. Analyze the provided contextual information
-3. Reword and improve the original question with more pertinent words from the provided context
+3. Reword and improve the original question based on your own knowledge and with more pertinent words from the provided context
 
 Follow these guidelines:
+- Prioritize maintaining the original question's intent and meaning. The improved question should be a natural evolution of the original, not a completely different query.
+- Use relevant details from the context to make the question more specific and informative.
+- Avoid introducing new information or changing the core topic. The improved question should address the same core concept as the original.
+- After the improved question, add instrustions after the question to guide the appropriate style of response for the question.
 
-- Create an improved question that make use of more words from the provided context. Make sure to retain the exact spirit of the original question and that it mean the same thing
-- Do not provide the answer as part of the expanded question
-- Incorporate relevant details and exact words from the context into the expanded question but DO NOT use or refer to the word context itself
-- If the context lacks sufficient information, simply return the original question
+If the context lacks sufficient information or the original question is already well-formed, simply return the original question.
 
-Always begin your response with your expanded question version and only provide the expanded question version.
+Always begin your response with your expanded question version and only provide the expanded question version. Do not provide any information about what lead to the improved question.
 
-DO NOT provide any information about what lead to the improved question. Just provide the improved question. Nothing else.
+After the improved question and appropriate instructions, provide a long series of words, concepts taken from the context than are related to the question. Those will help the LLM to retreive related information to the improved question.
 """
 
 N_HISTORY_LINES = 10
@@ -151,7 +151,7 @@ def main():
             print(f"\nImproved question: {improved_question}")
             log_conversation(query, improved_question, metadata, distances, CONVERSATION_FILE)
 
-            query = improved_question
+            query = query + "\n\n" + improved_question
             results = query_chromadb(db, query, N_RESULTS)
             context = "\n\n".join([result['documents'] for result in results])
             metadata = [result['metadatas'] for result in results]
