@@ -5,4 +5,5 @@ chroma_db
 queries.txt
 Research.md
 tmp
-_pycache_
+__pycache__
+.documents

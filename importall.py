@@ -9,7 +9,7 @@ import chromadb
 from chromadb.config import Settings
 
 # Usage
-document_directory = "H:\open-webui\data\docs\cloud"
+document_directory = "./documents"
 chroma_db_path = "./chromadb"
 collection_name = "collection"
 
