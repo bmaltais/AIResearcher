@@ -1,18 +1,6 @@
-import chromadb
-import importlib
-import sys
-import os
 import argparse
-from chromadb.config import Settings
-from chromadb.utils import embedding_functions
-from dotenv import load_dotenv
-import google.generativeai as genai
-from datetime import datetime
-
-from langchain_community.embeddings import OllamaEmbeddings
-from langchain_community.vectorstores import Chroma
-
-load_dotenv()
+import os
+from utils import *
 
 QUERY_FILE = 'queries.txt'
 CONVERSATION_FILE = './Research.md'
@@ -53,56 +41,6 @@ def setup_argparse():
     parser.add_argument("--collection", type=str, default="default_collection", help="Name of the ChromaDB collection")
     parser.add_argument("--chroma-db-path", type=str, default="./chroma_db", help="Path to store ChromaDB")
     return parser.parse_args()
-
-def setup_embeddings_and_db(chroma_db_path, collection_name:str = "default_collection"):
-    embeddings = OllamaEmbeddings(model="nomic-embed-text")
-    db = Chroma(persist_directory=chroma_db_path, embedding_function=embeddings, collection_name=collection_name)
-    return db
-
-def query_chromadb(db, query_text, num_results=20):
-    results = db.similarity_search_with_score(query_text, k=num_results)
-    processed_results = []
-    for doc, score in results:
-        processed_results.append({
-            "documents": doc.page_content,
-            "metadatas": doc.metadata,
-            "distances": score
-        })
-    return processed_results
-
-def setup_gemini(model_name, system_instruction, api_key):
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel(model_name=model_name, safety_settings=None, system_instruction=system_instruction)    
-    return model
-
-def query_gemini(model, context, question):
-    prompt = f"""Context: \n{context}\n\nQuestion: \n{question}"""
-    response = model.generate_content(prompt)
-    return response.text
-
-def log_full_query(query, context, metadata, query_file):
-    with open(query_file, 'a', encoding='utf-8') as f:
-        f.write(f"--- Query at {datetime.now()} ---\n")
-        f.write(f"Question:\n{query}\n\n------------------------------\n")
-        f.write(f"Context:\n{context}\n\n")
-        f.write("\nMetadata of sources:\n")
-        for i, meta in enumerate(metadata, 1):
-            f.write(f"Source {i}:")
-            for key, value in meta.items():
-                f.write(f"  {key}: {value}")
-
-def log_conversation(question, answer, metadata, distances, conversation_file):
-    with open(conversation_file, 'a', encoding='utf-8') as f:
-        f.write(f"\n---\n## Query at {datetime.now()}\n---\n")
-        f.write(f"> [!Question]\n{question}\n\n")
-        f.write(f"### Answer\n\n{answer}\n\n")
-        f.write("\n```\nMetadata of sources:\n")
-        for i, (meta, dist) in enumerate(zip(metadata, distances), 1):
-            f.write(f"  Source {i}:")
-            for key, value in meta.items():
-                f.write(f"    {key}: {value}\n")
-            f.write(f"    Distance: {dist:.4f}\n")
-        f.write("```\n\n")
 
 def main():
     args = setup_argparse()
@@ -156,6 +94,8 @@ def main():
             context = "\n\n".join([result['documents'] for result in results])
             metadata = [result['metadatas'] for result in results]
             distances = [result['distances'] for result in results]
+            
+            log_full_query(query, context, metadata, QUERY_FILE)
 
         print("Querying Gemini...")
         answer = query_gemini(gemini_model, context, query)

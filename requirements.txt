@@ -7,6 +7,8 @@ beautifulsoup4
 markdown
 python-dotenv
 langchain_community
+langchain-openai
 python-docx
 email
 html2text
+tiktoken
